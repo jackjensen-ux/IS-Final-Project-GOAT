@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jordan vs LeBron: GOAT Trivia Challenge</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #C8102E;
+      --gold: #FDB927;
+      --dark: #1a1a1a;
+      --darker: #111111;
+      --gray: #2a2a2a;
+      --light: #f0f0f0;
+    }
+
+    body {
+      background: var(--dark);
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      color: var(--light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── WRAPPER ── */
+    .wrapper {
+      width: 100%;
+      max-width: 680px;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    /* ── SCOREBOARD ── */
+    .scoreboard {
+      background: var(--darker);
+      border: 2px solid var(--gold);
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+    .scoreboard::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(253, 185, 39, 0.2);
+      border-radius: 7px;
+      pointer-events: none;
+    }
+    .score-block { text-align: center; }
+    .score-label {
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .score-val {
+      font-size: 2.4rem;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .score-val.red  { color: var(--red); }
+    .score-val.gold { color: var(--gold); }
+    .divider {
+      width: 2px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    }
+    .game-title {
+      font-size: 11px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-align: center;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+
+    /* ── PROGRESS BAR ── */
+    .progress-wrap {
+      background: #222;
+      border-radius: 20px;
+      height: 10px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(to right, var(--red), var(--gold));
+      border-radius: 20px;
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+
+    /* ── QUESTION CARD ── */
+    .q-card {
+      background: var(--gray);
+      border-radius: 12px;
+      padding: 1.75rem;
+      border: 1px solid #3a3a3a;
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.4s ease;
+    }
+    .q-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(to right, var(--red), var(--gold));
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .q-meta {
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    .q-text {
+      font-size: 1.15rem;
+      font-weight: 500;
+      line-height: 1.55;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── CHOICES ── */
+    .choices { display: grid; gap: 0.75rem; }
+
+    .choice-btn {
+      background: #1e1e1e;
+      border: 1.5px solid #444;
+      border-radius: 8px;
+      padding: 0.85rem 1.1rem;
+      text-align: left;
+      color: var(--light);
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      font-family: inherit;
+    }
+    .choice-btn:hover:not(:disabled) {
+      background: #2e2e2e;
+      border-color: var(--gold);
+      color: var(--gold);
+      transform: translateX(5px);
+    }
+    .choice-btn.correct {
+      background: rgba(40, 167, 69, 0.2);
+      border-color: #28a745;
+      color: #5dd879;
+    }
+    .choice-btn.wrong {
+      background: rgba(200, 16, 46, 0.2);
+      border-color: var(--red);
+      color: #ff6b80;
+    }
+    .choice-btn:disabled { cursor: default; transform: none !important; }
+
+    .choice-key {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #888;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .choice-btn:hover:not(:disabled) .choice-key { border-color: var(--gold); color: var(--gold); }
+    .choice-btn.correct .choice-key { border-color: #28a745; color: #28a745; }
+    .choice-btn.wrong   .choice-key { border-color: var(--red);   color: var(--red); }
+
+    /* ── FEEDBACK ── */
+    .feedback {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      line-height: 1.55;
+      display: none;
+    }
+    .feedback.show { display: block; }
+    .feedback.correct-fb {
+      background: rgba(40, 167, 69, 0.15);
+      border: 1px solid rgba(40, 167, 69, 0.4);
+      color: #a8f0b8;
+    }
+    .feedback.wrong-fb {
+      background: rgba(200, 16, 46, 0.15);
+      border: 1px solid rgba(200, 16, 46, 0.4);
+      color: #ffaab5;
+    }
+
+    /* ── NEXT BUTTON ── */
+    .next-btn {
+      display: none;
+      margin: 1.5rem auto 0;
+      background: var(--red);
+      color: #fff;
+      border: 2px solid transparent;
+      padding: 0.85rem 2.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+      font-family: inherit;
+    }
+    .next-btn:hover {
+      background: transparent;
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* ── INTRO SCREEN ── */
+    .intro-screen { text-align: center; padding: 2.5rem 0; }
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .logo {
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+      color: #fff;
+    }
+    .logo .vs {
+      color: var(--gold);
+      font-size: 1.1rem;
+      display: block;
+      letter-spacing: 5px;
+      margin-bottom: 0.15rem;
+    }
+    .intro-sub {
+      color: #888;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+    .silhouettes {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .player-card {
+      background: #222;
+      border: 1px solid #3a3a3a;
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      min-width: 130px;
+    }
+    .player-name {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+    }
+    .player-num { font-size: 3.2rem; font-weight: 700; line-height: 1; }
+    .player-num.red  { color: var(--red); }
+    .player-num.gold { color: var(--gold); }
+    .vs-badge {
+      color: var(--gold);
+      font-size: 1.4rem;
+      font-weight: 700;
+      padding-bottom: 0.75rem;
+    }
+    .intro-desc {
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+      max-width: 380px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.65;
+    }
+    .start-btn {
+      background: var(--red);
+      color: #fff;
+      border: 2px solid transparent;
+      padding: 1rem 3rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+      font-family: inherit;
+    }
+    .start-btn:hover {
+      background: transparent;
+      border-color: var(--red);
+      color: var(--red);
+      transform: scale(1.03);
+    }
+
+    /* ── END SCREEN ── */
+    .end-screen {
+      display: none;
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+      padding: 1rem 0;
+    }
+    .trophy { font-size: 5rem; margin-bottom: 1rem; display: block; }
+    .final-score {
+      font-size: 3.8rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .final-label {
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 1.5rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+    .verdict-badge {
+      display: inline-block;
+      background: var(--red);
+      padding: 0.5rem 1.75rem;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      border: 2px solid var(--gold);
+      color: #fff;
+    }
+    .verdict-desc {
+      color: #aaa;
+      font-size: 0.95rem;
+      max-width: 400px;
+      margin: 0 auto 2rem;
+      line-height: 1.65;
+    }
+    .restart-btn {
+      background: transparent;
+      border: 2px solid var(--gold);
+      color: var(--gold);
+      padding: 0.85rem 2.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: background 0.2s, color 0.2s, transform 0.15s;
+      font-family: inherit;
+    }
+    .restart-btn:hover {
+      background: var(--gold);
+      color: var(--darker);
+      transform: scale(1.03);
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      color: #444;
+      font-size: 11px;
+      letter-spacing: 1px;
+      margin-top: 3rem;
+      text-transform: uppercase;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 480px) {
+      .logo          { font-size: 1.9rem; }
+      .score-val     { font-size: 1.7rem; }
+      .q-text        { font-size: 1rem; }
+      .player-num    { font-size: 2.4rem; }
+      .final-score   { font-size: 2.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- ═══ SCOREBOARD (always visible during game) ═══ -->
+  <div class="scoreboard" id="scoreboard" style="display:none">
+    <div class="score-block">
+      <div class="score-label">Score</div>
+      <div class="score-val gold" id="score-display">0</div>
+    </div>
+    <div class="divider"></div>
+    <div class="score-block">
+      <div class="game-title">GOAT&nbsp;Trivia</div>
+    </div>
+    <div class="divider"></div>
+    <div class="score-block">
+      <div class="score-label">Question</div>
+      <div class="score-val red" id="q-display">1/10</div>
+    </div>
+  </div>
+
+  <!-- ═══ PROGRESS BAR ═══ -->
+  <div class="progress-wrap" id="progress-wrap" style="display:none">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <!-- ═══ INTRO SCREEN ═══ -->
+  <div id="intro" class="intro-screen">
+    <p class="eyebrow">The Ultimate Debate</p>
+    <div class="logo">
+      <span class="vs">VS</span>
+      JORDAN &amp; LEBRON
+    </div>
+    <p class="intro-sub">GOAT Trivia Challenge</p>
+
+    <div class="silhouettes">
+      <div class="player-card">
+        <div class="player-name">Michael</div>
+        <div class="player-num red">23</div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="player-card">
+        <div class="player-name">LeBron</div>
+        <div class="player-num gold">6/23</div>
+      </div>
+    </div>
+
+    <p class="intro-desc">
+      10 questions. Stats, records, and milestones.<br>
+      Can you separate the legends? Prove your GOAT IQ.
+    </p>
+
+    <button class="start-btn" onclick="startGame()">Tip Off</button>
+  </div>
+
+  <!-- ═══ QUESTION CARD ═══ -->
+  <div class="q-card" id="q-card" style="display:none">
+    <div class="q-meta" id="q-meta">Question 1 of 10</div>
+    <div class="q-text" id="q-text"></div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <button class="next-btn" id="next-btn" onclick="nextQuestion()">Next Question &rarr;</button>
+
+  <!-- ═══ END SCREEN ═══ -->
+  <div class="end-screen" id="end-screen">
+    <span class="trophy" id="trophy-icon">🏆</span>
+    <div class="final-score" id="final-score">0/10</div>
+    <div class="final-label">Final Score</div>
+    <div class="verdict-badge" id="verdict-title"></div>
+    <p class="verdict-desc" id="verdict-desc"></p>
+    <button class="restart-btn" onclick="restartGame()">Play Again</button>
+  </div>
+
+  <p class="footer">Information Systems Class Project &mdash; GOAT Trivia Challenge</p>
+
+</div><!-- /wrapper -->
+
+<script>
+  /* ── DATA ── */
+  const questions = [
+    {
+      q: "How many NBA Championships did Michael Jordan win in his career?",
+      choices: ["4", "5", "6", "7"],
+      correct: 2,
+      fact: "Jordan won 6 titles with the Bulls — all in two three-peats (1991–93 and 1996–98), never going to a Game 7 in a Finals."
+    },
+    {
+      q: "What is LeBron James's all-time NBA regular-season scoring record (as of 2024)?",
+      choices: ["35,367", "38,652", "40,121", "37,800"],
+      correct: 2,
+      fact: "LeBron surpassed Kareem Abdul-Jabbar's 38,387 in February 2023, and finished the 2023–24 season with over 40,000 career points."
+    },
+    {
+      q: "How many regular-season MVP awards did Michael Jordan win during his career?",
+      choices: ["3", "4", "5", "6"],
+      correct: 2,
+      fact: "Jordan earned 5 regular-season MVPs (1988, 1991, 1992, 1996, 1998) and 6 Finals MVPs — one for every championship he won."
+    },
+    {
+      q: "With how many different franchises has LeBron James won an NBA title?",
+      choices: ["1", "2", "3", "4"],
+      correct: 2,
+      fact: "LeBron won with the Miami Heat (2012, 2013), Cleveland Cavaliers (2016), and Los Angeles Lakers (2020) — three different teams."
+    },
+    {
+      q: "What was Michael Jordan's career regular-season scoring average (PPG)?",
+      choices: ["28.7", "30.1", "31.5", "29.4"],
+      correct: 1,
+      fact: "Jordan's 30.1 PPG is the highest in NBA history among players with at least 400 games played, making it the undisputed all-time record."
+    },
+    {
+      q: "How many All-Star selections did LeBron James earn through the 2023–24 season?",
+      choices: ["17", "19", "20", "21"],
+      correct: 2,
+      fact: "LeBron made 20 All-Star teams, surpassing Kareem Abdul-Jabbar's record of 19. His first selection came in 2005, just his second NBA season."
+    },
+    {
+      q: "In which season did Michael Jordan average 37.1 PPG — his single-season career high?",
+      choices: ["1985–86", "1986–87", "1987–88", "1988–89"],
+      correct: 1,
+      fact: "In 1986–87, Jordan scored 3,041 points in 82 games for a 37.1 average — the second-highest single-season scoring average in NBA history."
+    },
+    {
+      q: "LeBron James led the 2016 Cleveland Cavaliers back from a 3–1 deficit against which team?",
+      choices: ["Golden State Warriors", "San Antonio Spurs", "Oklahoma City Thunder", "Boston Celtics"],
+      correct: 0,
+      fact: "LeBron's Cavaliers overcame a historic 3–1 deficit against the 73-win Warriors, with LeBron delivering a legendary chase-down block in Game 7."
+    },
+    {
+      q: "How many times did Michael Jordan win the NBA Defensive Player of the Year award?",
+      choices: ["0", "1", "2", "3"],
+      correct: 1,
+      fact: "Jordan won Defensive Player of the Year in 1987–88 — the only season in NBA history a player led the league in scoring AND won that award."
+    },
+    {
+      q: "In which season did LeBron James score 51 points on his 39th birthday, becoming the oldest player ever to do so?",
+      choices: ["2022–23", "2023–24", "2024–25", "2021–22"],
+      correct: 2,
+      fact: "On December 30, 2024, LeBron dropped 51 points against the Golden State Warriors at age 40, shattering his own record for oldest player to score 50+."
+    }
+  ];
+
+  const verdicts = [
+    { min: 0,  max: 2,  icon: "🪑", title: "Benchwarmer",  desc: "You'd be cut in training camp. Hit the film room, study up on these two legends, and come back ready to ball." },
+    { min: 3,  max: 4,  icon: "🏀", title: "Rookie",        desc: "You know the names, but not the numbers. Some promise here — keep learning the GOAT debate inside and out." },
+    { min: 5,  max: 6,  icon: "⭐", title: "Starter",       desc: "Solid game. You've watched some tape and know your stats. A few more reps and you'll be in All-Star territory." },
+    { min: 7,  max: 8,  icon: "🌟", title: "All-Star",      desc: "Impressive. You clearly follow basketball closely. You know both legends well and can hold your own in any debate." },
+    { min: 9,  max: 9,  icon: "🏆", title: "Hall of Famer", desc: "Exceptional knowledge. You live and breathe basketball history. The GOAT debate has no secrets from you." },
+    { min: 10, max: 10, icon: "🐐", title: "The GOAT",      desc: "Perfect score. You ARE the GOAT of GOAT trivia. Jordan and LeBron would both nod in respect." }
+  ];
+
+  /* ── STATE ── */
+  let current  = 0;
+  let score    = 0;
+  let answered = false;
+  const KEYS   = ['A', 'B', 'C', 'D'];
+
+  /* ── HELPERS ── */
+  function $(id) { return document.getElementById(id); }
+
+  function showElement(id)  { $(id).style.display = 'block'; }
+  function hideElement(id)  { $(id).style.display = 'none';  }
+
+  /* ── GAME FLOW ── */
+  function startGame() {
+    hideElement('intro');
+    showElement('scoreboard');
+    showElement('progress-wrap');
+    showElement('q-card');
+    loadQuestion();
+  }
+
+  function loadQuestion() {
+    answered = false;
+    const q = questions[current];
+
+    $('q-meta').textContent    = `Question ${current + 1} of ${questions.length}`;
+    $('q-text').textContent    = q.q;
+    $('q-display').textContent = `${current + 1}/10`;
+    $('score-display').textContent = score;
+    $('progress-bar').style.width  = `${(current / questions.length) * 100}%`;
+
+    // Re-trigger fade-in animation
+    const card = $('q-card');
+    card.style.animation = 'none';
+    void card.offsetWidth;
+    card.style.animation = 'fadeIn 0.4s ease';
+
+    // Clear feedback
+    const fb = $('feedback');
+    fb.className = 'feedback';
+    fb.textContent = '';
+
+    // Hide next button
+    $('next-btn').style.display = 'none';
+
+    // Build choice buttons
+    const container = $('choices');
+    container.innerHTML = '';
+    q.choices.forEach((choice, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<span class="choice-key">${KEYS[i]}</span>${choice}`;
+      btn.setAttribute('aria-label', `Option ${KEYS[i]}: ${choice}`);
+      btn.onclick = () => answer(i, btn);
+      container.appendChild(btn);
+    });
+  }
+
+  function answer(idx, btn) {
+    if (answered) return;
+    answered = true;
+
+    const q    = questions[current];
+    const btns = document.querySelectorAll('.choice-btn');
+    btns.forEach(b => (b.disabled = true));
+
+    const fb = $('feedback');
+    const nb = $('next-btn');
+
+    if (idx === q.correct) {
+      score++;
+      btn.classList.add('correct');
+      fb.className  = 'feedback correct-fb show';
+      fb.textContent = '✓ Correct! ' + q.fact;
+    } else {
+      btn.classList.add('wrong');
+      btns[q.correct].classList.add('correct');
+      fb.className  = 'feedback wrong-fb show';
+      fb.textContent = '✗ Not quite. ' + q.fact;
+    }
+
+    nb.style.display = 'block';
+    nb.textContent   = current === questions.length - 1 ? 'See Results →' : 'Next Question →';
+  }
+
+  function nextQuestion() {
+    current++;
+    if (current >= questions.length) {
+      showEnd();
+      return;
+    }
+    loadQuestion();
+  }
+
+  function showEnd() {
+    hideElement('q-card');
+    $('next-btn').style.display = 'none';
+    $('progress-bar').style.width = '100%';
+    $('score-display').textContent = score;
+
+    const end = $('end-screen');
+    end.style.display = 'block';
+    end.style.animation = 'none';
+    void end.offsetWidth;
+    end.style.animation = 'fadeIn 0.5s ease';
+
+    $('final-score').textContent = `${score}/10`;
+
+    const v = verdicts.find(v => score >= v.min && score <= v.max);
+    $('trophy-icon').textContent  = v.icon;
+    $('verdict-title').textContent = v.title;
+    $('verdict-desc').textContent  = v.desc;
+  }
+
+  function restartGame() {
+    current  = 0;
+    score    = 0;
+    answered = false;
+
+    $('end-screen').style.display  = 'none';
+    $('progress-bar').style.width  = '0%';
+
+    showElement('q-card');
+    loadQuestion();
+  }
+</script>
+</body>
+</html>
